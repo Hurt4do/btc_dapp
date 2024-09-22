@@ -1,54 +1,70 @@
 #!/bin/bash
 
-# Especificar el nombre de la wallet
-WALLET_NAME="TestWallet"
+# Load wallet01, wallet02, and regwallet for mining
+WALLET1="./bitcoincli_wallet01.sh"
+WALLET2="./bitcoincli_wallet02.sh"
+REGWALLET="./bitcoincli_regwallet01.sh"
 
-# Paso 1: Verificar el saldo del monedero
-BALANCE=$(bitcoin-cli -testnet -rpcwallet="$WALLET_NAME" getbalance)
-echo "Saldo del Monedero: $BALANCE BTC"
+# Fixed transaction fee (0.001 BTC)
+FEE=0.001
 
-# Comprobar si el saldo es inferior a 0.0001 BTC
-if (( $(echo "$BALANCE < 0.0001" | bc -l) )); then
-  echo "Fondos insuficientes para proceder. Saliendo..."
-  exit 1
-fi
+# Step 1: List UTXOs in wallet01 (get first available UTXO)
+echo "Listing UTXOs from wallet01..."
+UTXO=$($WALLET1 listunspent | jq -r '.[0] | {txid: .txid, vout: .vout, amount: .amount}')
+TXID=$(echo $UTXO | jq -r '.txid')
+VOUT=$(echo $UTXO | jq -r '.vout')
+AMOUNT=$(echo $UTXO | jq -r '.amount')
 
-# Paso 2: Listar transacciones no gastadas (UTXOs)
-UTXOS=$(bitcoin-cli -testnet -rpcwallet="$WALLET_NAME" listunspent)
-echo "UTXOs disponibles: $UTXOS"
+echo "UTXO selected: txid=$TXID, vout=$VOUT, amount=$AMOUNT BTC"
 
-# Paso 3: Extraer la información del primer UTXO
-TXID=$(echo $UTXOS | jq -r '.[0].txid')
-VOUT=$(echo $UTXOS | jq -r '.[0].vout')
-AMOUNT=$(echo $UTXOS | jq -r '.[0].amount')
+# Step 2: Get an existing receiving address from wallet02
+echo "Getting an existing receiving address from wallet02..."
+RECEIVER=$($WALLET2 getaddressesbylabel "" | jq -r 'keys[0]')
 
-# Comprobar si se han encontrado UTXOs
-if [ -z "$TXID" ] || [ -z "$VOUT" ]; then
-  echo "No se encontraron UTXOs. Saliendo..."
-  exit 1
-fi
+# Step 3: Get an existing change address from wallet01
+echo "Getting an existing change address from wallet01..."
+CHANGE_ADDRESS=$($WALLET1 getaddressesbylabel "" | jq -r 'keys[0]')
 
-echo "UTXO seleccionado: TXID=$TXID, VOUT=$VOUT, Cantidad=$AMOUNT BTC"
+echo "Sending 1 BTC to $RECEIVER from wallet02"
+echo "Change will be sent to $CHANGE_ADDRESS in wallet01"
 
-# Paso 4: Definir la dirección del destinatario y la cantidad a enviar (ajustar estos valores)
-RECIPIENT_ADDRESS="tb1q588x8ymje8quqvdnn56kfm2yjeme9vhfu2srgu"  # Reemplazar con la dirección real del destinatario
-SEND_AMOUNT=0.0005  # Ajustar la cantidad a enviar
+# Step 4: Calculate the change amount
+# We send 1 BTC, so change = (AMOUNT - 1 BTC - FEE)
+CHANGE=$(echo "$AMOUNT - 1 - $FEE" | bc)
+echo "Change to be sent back to wallet01: $CHANGE BTC"
 
-# Verificar si la cantidad a enviar es mayor que la cantidad disponible en el UTXO
-if (( $(echo "$SEND_AMOUNT > $AMOUNT" | bc -l) )); then
-  echo "Cantidad de UTXO insuficiente para enviar $SEND_AMOUNT BTC. Saliendo..."
-  exit 1
-fi
+# Step 5: Create a raw transaction
+echo "Creating raw transaction..."
+RAW_TX=$($WALLET1 createrawtransaction "[{\"txid\":\"$TXID\",\"vout\":$VOUT}]" "{\"$RECEIVER\":1,\"$CHANGE_ADDRESS\":$CHANGE}")
 
-# Paso 5: Crear una transacción sin firmar
-RAW_TX=$(bitcoin-cli -testnet -rpcwallet="$WALLET_NAME" createrawtransaction '[{"txid": "'"$TXID"'", "vout": '"$VOUT"'}]' '{"'"$RECIPIENT_ADDRESS"'": '"$SEND_AMOUNT"'}')
-echo "Transacción sin firmar: $RAW_TX"
+echo "Raw transaction created: $RAW_TX"
 
-# Paso 6: Firmar la transacción sin firmar
-SIGNED_TX=$(bitcoin-cli -testnet -rpcwallet="$WALLET_NAME" signrawtransactionwithwallet "$RAW_TX")
-SIGNED_HEX=$(echo $SIGNED_TX | jq -r '.hex')
-echo "Transacción firmada (Hex): $SIGNED_HEX"
+# Step 6: Sign the raw transaction
+echo "Signing raw transaction..."
+SIGNED_TX=$($WALLET1 signrawtransactionwithwallet "$RAW_TX" | jq -r '.hex')
 
-# Paso 7: Transmitir la transacción firmada a la red
-TXID_SENT=$(bitcoin-cli -testnet -rpcwallet="$WALLET_NAME" sendrawtransaction "$SIGNED_HEX")
-echo "Transacción transmitida con TXID: $TXID_SENT"
+echo "Signed transaction: $SIGNED_TX"
+
+# Step 7: Send the signed transaction
+echo "Sending the signed transaction to the network..."
+TXID_SENT=$($WALLET1 sendrawtransaction "$SIGNED_TX")
+
+echo "Transaction sent successfully! TXID: $TXID_SENT"
+
+# Step 8: Mine a block to confirm the transaction
+# Using an existing address from regwallet01 to mine the block
+echo "Getting an existing address from regwallet01 for mining..."
+MINING_ADDRESS=$($REGWALLET getaddressesbylabel "" | jq -r 'keys[0]')
+
+echo "Mining a block using the address: $MINING_ADDRESS"
+BLOCK_MINED=$($REGWALLET generatetoaddress 1 "$MINING_ADDRESS")
+
+echo "Block mined! Block hash: $BLOCK_MINED"
+
+# Step 9: Check the balances
+echo "Checking balances..."
+BALANCE_WALLET1=$($WALLET1 getbalance)
+BALANCE_WALLET2=$($WALLET2 getbalance)
+
+echo "Wallet01 balance: $BALANCE_WALLET1 BTC"
+echo "Wallet02 balance: $BALANCE_WALLET2 BTC"
