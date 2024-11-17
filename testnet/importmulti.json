@@ -1,0 +1,11 @@
+[
+    {
+      "desc": "sh(multi(2,0321379da3bc95c2527a8cd6b2b1a5205e8a8a5ec70ad895eedecedc90fdad429f,038a5e16025a9ac56144a991b77095d0f948140da9c4ff2f5659701aeee5cbd27a))#rmeuxhqt",
+      "active": true,
+      "range": [0,1],
+      "internal": false,
+      "watchonly": true,
+      "label": "multisig",
+      "timestamp": "now"
+    }
+  ]
