@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# Script Name: create_multisig_psbt.sh
+# Script Name: create_multisig_wallet.sh
 # Description: Automates the creation of a multisig wallet and generates an
 #              unsigned PSBT using Bitcoin Core and Sparrow Wallets on Testnet4.
 # Requirements:
@@ -10,8 +10,8 @@
 #   - jq installed for JSON processing.
 #   - Three .txt files containing tpubs: tpub1.txt, tpub2.txt, tpub3.txt
 # Usage:
-#   chmod +x create_multisig_psbt.sh
-#   ./create_multisig_psbt.sh
+#   chmod +x create_multisig_wallet.sh
+#   ./create_multisig_wallet.sh
 # ==============================================================================
 
 # Exit immediately if a command exits with a non-zero status
@@ -182,3 +182,16 @@ receiving_address=$(bitcoin-cli -testnet4 -rpcwallet="$wallet_name" getnewaddres
 
 echo "✔️  Receiving Address Generated:"
 echo "Receiving Address: $receiving_address"
+
+# ------------------------------
+# Save the Multisig Address to a File
+# ------------------------------
+echo "$receiving_address" > multisig_address.txt
+echo "✔️  Multisig Address saved to multisig_address.txt"
+
+# Optional: Display the multisig address
+echo "🎉 Multisig Address: $receiving_address"
+
+# ------------------------------
+# End of Script
+# ------------------------------

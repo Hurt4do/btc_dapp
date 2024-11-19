@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# Script Name: combine_finalize_broadcast_psbt.sh
+# Script Name: broadcast_psbt.sh
 # Description: Combines signed PSBTs from cosigners, finalizes the transaction,
 #              and broadcasts it to the Testnet4 Bitcoin network.
 # Requirements:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# Script Name: create_multisig_psbt_continue.sh
+# Script Name: create_psbt.sh
 # Description: Continues the multisig process by creating a Partially Signed
 #              Bitcoin Transaction (PSBT) for spending funds from the multisig wallet.
 # Requirements:
