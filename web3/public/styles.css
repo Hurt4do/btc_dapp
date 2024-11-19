@@ -1,0 +1,35 @@
+/* Filename: public/styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    text-align: center;
+    padding-top: 20px;
+}
+
+input[type="text"], input[type="password"], select {
+    padding: 8px;
+    font-size: 1em;
+    width: 200px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.navigation a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #007BFF;
+}
+
+.navigation a:hover {
+    text-decoration: underline;
+}
+
+.multisig-address p {
+    word-break: break-all;
+}

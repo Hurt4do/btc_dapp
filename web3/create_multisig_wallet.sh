@@ -29,17 +29,17 @@ function error_exit {
 # Check for required files
 # ------------------------------
 for i in 1 2 3; do
-    if [ ! -f "tpub${i}.txt" ]; then
-        error_exit "File tpub${i}.txt not found in the current directory."
+    if [ ! -f "./data/pubkeys/tpub${i}.txt" ]; then
+        error_exit "File data/pubkeys/tpub${i}.txt not found."
     fi
 done
 
 # ------------------------------
 # Read tpubs from .txt files
 # ------------------------------
-tpub1=$(cat tpub1.txt | tr -d '\n')
-tpub2=$(cat tpub2.txt | tr -d '\n')
-tpub3=$(cat tpub3.txt | tr -d '\n')
+tpub1=$(cat ./data/pubkeys/tpub1.txt | tr -d '\n')
+tpub2=$(cat ./data/pubkeys/tpub2.txt | tr -d '\n')
+tpub3=$(cat ./data/pubkeys/tpub3.txt | tr -d '\n')
 
 echo "✔️  Successfully read tpubs from tpub1.txt, tpub2.txt, and tpub3.txt."
 
@@ -56,7 +56,7 @@ while bitcoin-cli -testnet4 listwallets | grep -q "$wallet_name"; do
 done
 
 # Save the wallet name to a file for later use
-echo "$wallet_name" > last_wallet_name.txt
+echo "$wallet_name" > ./data/last_wallet_name.txt
 
 echo "🛠️  Creating a new descriptor wallet named '${wallet_name}' without private keys..."
 create_wallet_output=$(bitcoin-cli -testnet4 createwallet "$wallet_name" true true)
@@ -117,7 +117,7 @@ fi
 # ------------------------------
 # Create Import JSON
 # ------------------------------
-echo "📄 Creating import_descriptors.json..."
+echo "📄 Creating descriptor_import.json..."
 
 import_descriptors='[
   {
@@ -186,8 +186,8 @@ echo "Receiving Address: $receiving_address"
 # ------------------------------
 # Save the Multisig Address to a File
 # ------------------------------
-echo "$receiving_address" > multisig_address.txt
-echo "✔️  Multisig Address saved to multisig_address.txt"
+echo "$receiving_address" > ./data/multisig_address.txt
+echo "✔️  Multisig Address saved to ./data/multisig_address.txt"
 
 # Optional: Display the multisig address
 echo "🎉 Multisig Address: $receiving_address"
