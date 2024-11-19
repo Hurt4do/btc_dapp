@@ -1,0 +1,124 @@
+<!-- Filename: views/login.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Multisig dApp</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Center the form vertically and horizontally */
+        body, html {
+            height: 100%;
+            background-color: #f8f9fa;
+        }
+        .auth-container {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+        }
+        .auth-card .card-header {
+            border-bottom: none;
+            text-align: center;
+        }
+        .auth-card .card-title {
+            margin-bottom: 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .auth-card .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .auth-card .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .auth-card .form-control:focus {
+            box-shadow: none;
+            border-color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-lock-fill"></i> Login to Multisig dApp</h3>
+                </div>
+                <div class="card-body">
+                    <% if (message) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= message %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    <form action="/login" method="POST" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                                <div class="invalid-feedback">
+                                    Please enter your username.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <div class="invalid-feedback">
+                                    Please enter your password.
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i> Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (including Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        // Form Validation Script
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('form')
+
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+</body>
+</html>

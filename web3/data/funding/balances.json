@@ -1,0 +1,43 @@
+{
+  "users_balances": [
+    {
+      "username": "alice",
+      "expected_amount_mbtc": "3.49999",
+      "total_sent_mbtc": "4",
+      "amount_remaining_mbtc": "0",
+      "tx_values": [
+        {
+          "txid": "a97e4f045a77fe73e67dc01028d41d91231770cf9c0501cde30b39338bc76154",
+          "amount_mbtc": "4"
+        }
+      ]
+    },
+    {
+      "username": "bob",
+      "expected_amount_mbtc": "3.49999",
+      "total_sent_mbtc": "4",
+      "amount_remaining_mbtc": "0",
+      "tx_values": [
+        {
+          "txid": "7e228694a351589908813d3b0a2b639540b3e1d176defd4c18093850d3539203",
+          "amount_mbtc": "4"
+        }
+      ]
+    },
+    {
+      "username": "charlie",
+      "expected_amount_mbtc": "3.49999",
+      "total_sent_mbtc": "4",
+      "amount_remaining_mbtc": "0",
+      "tx_values": [
+        {
+          "txid": "97bb857deab6bc11f65b5e5214c176a570fdbbfb575f3a0adc6f70c2473e3b6b",
+          "amount_mbtc": "4"
+        }
+      ]
+    }
+  ],
+  "total_mbtc": "12",
+  "expected_amount": "0.01",
+  "expected_amount_per_user": ".00349999"
+}

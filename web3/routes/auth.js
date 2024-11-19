@@ -2,72 +2,62 @@
 
 const express = require('express');
 const router = express.Router();
-const { genericPassword, users } = require('../config');
+const config = require('../config');
+const fs = require('fs').promises;
 
-// Import helper functions
-const { loadPubKeys } = require('../utils/pubKeys');
-const { loadPubkeyConfirmations } = require('../utils/pubkeyConfirmations');
-const { renderPubkeys } = require('../utils/render');
+// Function to load users from users.json
+async function loadUsers() {
+    try {
+        const usersData = await fs.readFile(config.usersFile, 'utf-8');
+        return JSON.parse(usersData);
+    } catch (error) {
+        console.error(`Error reading users file: ${error}`);
+        return [];
+    }
+}
 
-// Serve the login page
+// Serve Login Page
 router.get('/', (req, res) => {
-    res.send(`
-        <html>
-            <head>
-                <title>Multisig Login</title>
-                <link rel="stylesheet" href="/styles.css">
-            </head>
-            <body>
-                <h1>Login to Access Public Keys</h1>
-                <form action="/pubkeys" method="POST">
-                    <select name="username" required>
-                        ${users.map(user => `<option value="${user}">${user}</option>`).join('')}
-                    </select><br><br>
-                    <input type="password" name="password" placeholder="Enter password" required>
-                    <button type="submit">Login</button>
-                </form>
-            </body>
-        </html>
-    `);
-});
-
-// Handle login request
-router.post('/pubkeys', async (req, res) => {
-    const { password, username } = req.body;
-    console.log(`Attempting login for user: ${username} with password: ${password}`);
-    if (password === genericPassword && users.includes(username)) {
-        try {
-            const pubKeys = await loadPubKeys();
-            const pubkeyConfirmations = await loadPubkeyConfirmations();
-            const unconfirmedUsers = users.filter((_, index) => !pubkeyConfirmations[index]);
-            const confirmationsLeft = unconfirmedUsers.length;
-
-            console.log(`Pubkeys accessed by ${username}`);
-            console.log(`Pubkey Confirmations: ${pubkeyConfirmations}`);
-            console.log(`Confirmations left: ${confirmationsLeft}`);
-
-            // Save user info in session
-            req.session.user = {
-                username: username,
-                pubKeys: pubKeys,
-                pubkeyConfirmations: pubkeyConfirmations
-            };
-
-            res.redirect('/pubkeys'); // Redirect to GET /pubkeys
-        } catch (error) {
-            console.error(`Error loading pubkeys data: ${error}`);
-            res.send(`<h1>Error Loading Pubkeys</h1><p>${error.message}</p><a href="/">Go back</a>`);
-        }
+    if (req.session.user) {
+        res.redirect('/pubkeys'); // Redirect to pubkeys if already logged in
     } else {
-        res.send(`<h1>Incorrect Username or Password</h1><a href="/">Go back</a>`);
+        res.render('login', { title: 'Login', message: null });
     }
 });
 
-// Handle logout
+// Handle Login
+router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        // Read users from users.json
+        const users = await loadUsers();
+
+        // Find user with matching username and password
+        const user = users.find(u => u.username === username && u.password === password);
+
+        if (user) {
+            // Successful login
+            req.session.user = {
+                username: user.username
+                // You can add more user-related data here if needed
+            };
+            res.redirect('/pubkeys');
+        } else {
+            // Failed login
+            res.render('login', { title: 'Login', message: 'Incorrect Username or Password' });
+        }
+    } catch (error) {
+        console.error(`Error during login: ${error}`);
+        res.render('login', { title: 'Login', message: 'An error occurred. Please try again later.' });
+    }
+});
+
+// Handle Logout
 router.get('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            return res.send(`<h1>Error Logging Out</h1><p>${err.message}</p><a href="/pubkeys">Go back</a>`);
+            return res.render('error', { title: 'Error', errorMessage: err.message });
         }
         res.redirect('/');
     });

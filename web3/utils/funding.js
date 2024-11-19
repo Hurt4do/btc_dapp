@@ -2,60 +2,133 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { users, dataFolder } = require('../config');
+const config = require('../config');
 
-// Funding Txid Management
+/**
+ * Load TxIDs from JSON file.
+ * @returns {Promise<Array>} Array of TxIDs.
+ */
 async function loadTxids() {
-    return await Promise.all(users.map(async (_, index) => {
-        const filePath = path.join(dataFolder, 'txids', `txid${index + 1}.txt`);
-        try {
-            const txid = await fs.readFile(filePath, 'utf-8');
-            return txid.trim();
-        } catch {
-            // If txid file doesn't exist, create it with an empty string
-            await fs.writeFile(filePath, '');
-            console.log(`Created txid file for user ${index + 1}`);
-            return "";
-        }
-    }));
-}
-
-async function saveTxids(txids) {
+    const txidsPath = path.join(config.dataFolder, 'funding', 'txids.json');
     try {
-        await Promise.all(txids.map(async (txid, index) => {
-            const filePath = path.join(dataFolder, 'txids', `txid${index + 1}.txt`);
-            await fs.writeFile(filePath, txid);
-            console.log(`Saved txid for user ${index + 1}`);
-        }));
+        const data = await fs.readFile(txidsPath, 'utf-8');
+        return JSON.parse(data);
     } catch (error) {
-        console.error(`Error saving txids: ${error}`);
+        console.error(`Error reading TxIDs from JSON: ${error}`);
+        // Initialize with empty array if file doesn't exist
+        const initialTxids = [];
+        await saveTxids(initialTxids);
+        return initialTxids;
     }
 }
 
-// Funding Confirmation Management
-async function loadFundingConfirmations() {
-    return await Promise.all(users.map(async (_, index) => {
-        const filePath = path.join(dataFolder, 'funding_confirmations', `confirm_fund${index + 1}.txt`);
-        try {
-            const data = await fs.readFile(filePath, 'utf-8');
-            const status = data.trim() === 'true';
-            console.log(`Loaded funding confirmation for user ${index + 1}: ${status}`);
-            return status;
-        } catch {
-            await fs.writeFile(filePath, 'false');
-            console.log(`Funding confirmation file for user ${index + 1} did not exist, created with false`);
-            return false;
-        }
-    }));
+/**
+ * Save TxIDs to JSON file.
+ * @param {Array} txids - Array of TxIDs.
+ * @returns {Promise<void>}
+ */
+async function saveTxids(txids) {
+    const txidsPath = path.join(config.dataFolder, 'funding', 'txids.json');
+    try {
+        await fs.writeFile(txidsPath, JSON.stringify(txids, null, 4), 'utf-8');
+    } catch (error) {
+        console.error(`Error writing TxIDs to JSON: ${error}`);
+        throw error;
+    }
 }
 
-async function saveFundingConfirmation(userIndex, status) {
-    const filePath = path.join(dataFolder, 'funding_confirmations', `confirm_fund${userIndex + 1}.txt`);
+/**
+ * Load Funding Confirmations from JSON file.
+ * @returns {Promise<Array>} Array of confirmation statuses (true/false).
+ */
+async function loadFundingConfirmations() {
+    const confirmationsPath = path.join(config.dataFolder, 'funding', 'funding_confirmations.json');
     try {
-        await fs.writeFile(filePath, status ? 'true' : 'false');
-        console.log(`Saved funding confirmation for user ${userIndex + 1}: ${status}`);
+        const data = await fs.readFile(confirmationsPath, 'utf-8');
+        return JSON.parse(data);
     } catch (error) {
-        console.error(`Error saving funding confirmation for user ${userIndex + 1}: ${error}`);
+        console.error(`Error reading funding confirmations from JSON: ${error}`);
+        // Initialize with false for each user if file doesn't exist
+        const users = await loadUsers();
+        const initialConfirmations = users.map(() => false);
+        await saveFundingConfirmations(initialConfirmations);
+        return initialConfirmations;
+    }
+}
+
+/**
+ * Save Funding Confirmations to JSON file.
+ * @param {Array} confirmations - Array of confirmation statuses.
+ * @returns {Promise<void>}
+ */
+async function saveFundingConfirmations(confirmations) {
+    const confirmationsPath = path.join(config.dataFolder, 'funding', 'funding_confirmations.json');
+    try {
+        await fs.writeFile(confirmationsPath, JSON.stringify(confirmations, null, 4), 'utf-8');
+    } catch (error) {
+        console.error(`Error writing funding confirmations to JSON: ${error}`);
+        throw error;
+    }
+}
+
+/**
+ * Save Funding Confirmation for a specific user.
+ * @param {number} userIndex - Zero-based index of the user.
+ * @param {boolean} status - Confirmation status.
+ * @returns {Promise<void>}
+ */
+async function saveFundingConfirmation(userIndex, status) {
+    const confirmations = await loadFundingConfirmations();
+    if (userIndex < 0 || userIndex >= confirmations.length) {
+        throw new Error('Invalid User Index for Funding Confirmation');
+    }
+    confirmations[userIndex] = status;
+    await saveFundingConfirmations(confirmations);
+}
+
+/**
+ * Load Multisig Address from JSON file.
+ * @returns {Promise<string>} Multisig Address.
+ */
+async function loadMultisigAddress() {
+    const multisigAddressPath = path.join(config.dataFolder, 'funding', 'multisig_address.json');
+    try {
+        const data = await fs.readFile(multisigAddressPath, 'utf-8');
+        const json = JSON.parse(data);
+        return json.multisig_address || '';
+    } catch (error) {
+        console.error(`Error reading multisig address from JSON: ${error}`);
+        return '';
+    }
+}
+
+/**
+ * Save Multisig Address to JSON file.
+ * @param {string} address - Multisig Address.
+ * @returns {Promise<void>}
+ */
+async function saveMultisigAddress(address) {
+    const multisigAddressPath = path.join(config.dataFolder, 'funding', 'multisig_address.json');
+    try {
+        await fs.writeFile(multisigAddressPath, JSON.stringify({ multisig_address: address }, null, 4), 'utf-8');
+    } catch (error) {
+        console.error(`Error writing multisig address to JSON: ${error}`);
+        throw error;
+    }
+}
+
+/**
+ * Load Users from users.json
+ * @returns {Promise<Array>} Array of user objects.
+ */
+async function loadUsers() {
+    const usersPath = path.join(config.dataFolder, 'users.json');
+    try {
+        const data = await fs.readFile(usersPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error(`Error reading users from JSON: ${error}`);
+        return [];
     }
 }
 
@@ -63,5 +136,9 @@ module.exports = {
     loadTxids,
     saveTxids,
     loadFundingConfirmations,
-    saveFundingConfirmation
+    saveFundingConfirmations,
+    saveFundingConfirmation,
+    loadMultisigAddress,
+    saveMultisigAddress,
+    loadUsers
 };

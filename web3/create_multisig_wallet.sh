@@ -8,7 +8,7 @@
 #   - Bitcoin Core installed and configured.
 #   - Sparrow Wallets set up for multisig with exported tpubs.
 #   - jq installed for JSON processing.
-#   - Three .txt files containing tpubs: tpub1.txt, tpub2.txt, tpub3.txt
+#   - pubkeys.json file containing three tpubs in an array.
 # Usage:
 #   chmod +x create_multisig_wallet.sh
 #   ./create_multisig_wallet.sh
@@ -26,22 +26,20 @@ function error_exit {
 }
 
 # ------------------------------
-# Check for required files
+# Check for pubkeys.json file
 # ------------------------------
-for i in 1 2 3; do
-    if [ ! -f "./data/pubkeys/tpub${i}.txt" ]; then
-        error_exit "File data/pubkeys/tpub${i}.txt not found."
-    fi
-done
+if [ ! -f "./data/pubkeys.json" ]; then
+    error_exit "File data/pubkeys.json not found."
+fi
 
 # ------------------------------
-# Read tpubs from .txt files
+# Read tpubs from pubkeys.json
 # ------------------------------
-tpub1=$(cat ./data/pubkeys/tpub1.txt | tr -d '\n')
-tpub2=$(cat ./data/pubkeys/tpub2.txt | tr -d '\n')
-tpub3=$(cat ./data/pubkeys/tpub3.txt | tr -d '\n')
+tpub1=$(jq -r '.[0]' ./data/pubkeys.json)
+tpub2=$(jq -r '.[1]' ./data/pubkeys.json)
+tpub3=$(jq -r '.[2]' ./data/pubkeys.json)
 
-echo "✔️  Successfully read tpubs from tpub1.txt, tpub2.txt, and tpub3.txt."
+echo "✔️  Successfully read tpubs from pubkeys.json."
 
 # ------------------------------
 # Create a New Wallet in Bitcoin Core
@@ -184,10 +182,18 @@ echo "✔️  Receiving Address Generated:"
 echo "Receiving Address: $receiving_address"
 
 # ------------------------------
-# Save the Multisig Address to a File
+# Save the Multisig Address to a JSON File
 # ------------------------------
-echo "$receiving_address" > ./data/multisig_address.txt
-echo "✔️  Multisig Address saved to ./data/multisig_address.txt"
+# Define the path for the multisig_address.json file
+multisig_address_json="./data/funding/multisig_address.json"
+
+# Ensure the directory exists
+mkdir -p "$(dirname "$multisig_address_json")"
+
+# Create the JSON object with the multisig address
+echo "{\"multisig_address\": \"$receiving_address\"}" > "$multisig_address_json"
+
+echo "✔️  Multisig Address saved to $multisig_address_json"
 
 # Optional: Display the multisig address
 echo "🎉 Multisig Address: $receiving_address"
